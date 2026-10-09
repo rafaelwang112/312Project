@@ -125,6 +125,23 @@ trends_table <- tracks_simplified |>
 # varaibles  should be visualized. Average valence appears to have
 # remained consistent over the years, this could also be visualized.
 
+# This table adds an extra criteria of popularity >=62, the 3rd Quartile, to help
+# guide the question of whether popular songs remain stable over time.
+trends_popular_table <- tracks_simplified |>
+  filter (!is.na(album_release_year) & popularity>=62) |>
+  group_by (album_release_year) |>
+  summarize(
+    average_duration= mean(duration_ms, na.rm=TRUE),
+    average_danceability = mean(danceability),
+    average_energy = mean (energy),
+    average_acousticness = mean(acousticness),
+    average_liveness = mean (liveness),
+    average_valence = mean (valence),
+    count = n()
+  )
+# In the most recent ~5 years, it appears that average danceability has increased, while 
+# average energy has remained stable.
+
 # Contributed by Rafael Wang
 # proportion table seeing proportion of genre distribution for a given year
 genre_table <- table (tracks_simplified$album_release_year, tracks_simplified$genres)
