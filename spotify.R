@@ -168,7 +168,7 @@ success_genre_prediction
 tracks_simplified <- tracks_simplified |>
   mutate(duration_min = duration_ms / 60000)
 
-# note: feat_flag uses str_detect(name, "feat), which could also match words like "defeat". This is likely only a few songs, so not adjustment will be necessary.
+
 
 # Contributed by Cherim Kim
 # Q2 Decoding Success
@@ -209,7 +209,7 @@ ggplot(model_data, aes(x = feat_flag, y = log_streams, fill = feat_flag)) +
   labs(title = "Do collaborations get more streams?",
        x = NULL, y = "log10(Streams)")
 
-# Genre vs streams (visualizes A's success_genre_prediction table)
+# Genre vs streams (visualize success_genre_prediction table)
 ggplot(model_data,
        aes(x = fct_reorder(genres, log_streams, .fun = median),
            y = log_streams)) +
@@ -284,7 +284,7 @@ ggplot(trends_long, aes(x = album_release_year, y = value, color = group)) +
   theme(legend.position = "bottom")
 
 # Contributed by Cherim Kim
-# Genre share by year (change 2000 if your group wants a different start year)
+# Genre share by year
 ggplot(tracks_simplified |> filter(album_release_year >= 2000),
        aes(x = album_release_year, fill = genres)) +
   geom_bar(position = "fill") +
