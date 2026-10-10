@@ -12,17 +12,14 @@ tracks_simplified <- read_csv("tracks_simplified.csv")
 # This new variable was created because we want to analyze industry trends,
 # which would require seeing differences through the years
 tracks_simplified <- tracks_simplified |>
-  mutate(album_release_year = as.numeric(str_sub(album_release_date,-2)))
-tracks_simplified <- tracks_simplified |>
-  mutate(album_release_year = ifelse(album_release_year <=26,
-                                     album_release_year+2000,
-                                     album_release_year+1900))
-tracks_simplified <- tracks_simplified |>
-  mutate(album_release_year = ifelse(album_release_date =="0",
-                                     NA, album_release_year))
-tracks_simplified <- tracks_simplified |>
-  mutate(album_release_year = ifelse(str_sub(album_release_date, 5, 5)=="-",
-                                     as.numeric(str_sub(album_release_date, 1,4)),
+  mutate(album_release_year = as.numeric(str_sub(album_release_date, -2))) |>
+  mutate(album_release_year = ifelse(album_release_year <= 26,
+                                     album_release_year + 2000,
+                                     album_release_year + 1900)) |>
+  mutate(album_release_year = ifelse(album_release_date == "0",
+                                     NA, album_release_year)) |>
+  mutate(album_release_year = ifelse(str_sub(album_release_date, 5, 5) == "-",
+                                     as.numeric(str_sub(album_release_date, 1, 4)),
                                      album_release_year))
 # Contributed by Rafael Wang
 #Two new variables created. One is title_length, as we want to see if title length
