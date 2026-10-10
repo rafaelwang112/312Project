@@ -253,9 +253,10 @@ ggplot(m4_points, aes(x = log_streams_hat, y = residual)) +
        x = "Fitted log10(Streams)", y = "Residual")
 
 # Contributed by Cherim Kim
-# Put songs into 4 groups, from artists with the fewest followers (1) to the most (4).
-# For each group, show the typical number of streams for solo songs and "feat" songs.
-# This helps us see if more followers and collaborations mean more streams
+# an easier way to see our results without reading regression numbers.
+# put songs into 4 groups, from artists with the fewest followers (1) to the most (4).
+# for each group, show the typical number of streams for solo songs and "feat" songs.
+# this helps us see if more followers and collaborations mean more streams.
 model_data |>
   mutate(follower_group = ntile(artist_followers, 4)) |>
   group_by(follower_group, feat_flag) |>
