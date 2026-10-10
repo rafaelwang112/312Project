@@ -292,10 +292,10 @@ ggplot(tracks_simplified |> filter(album_release_year >= 2000),
   labs(title = "Genre share by release year",
        x = "Album release year", y = "Share of tracks", fill = "Genre")
 
+
+
+
 # Contributed by Kyle Cacha
-# Selects only numeric variables from the dataset
-tracks_num <- tracks_simplified |>
-  select(where(is.numeric))
 
 # Calculate pairwise correlations
 cor_matrix <- cor(tracks_num,
