@@ -181,11 +181,11 @@ model_data <- tracks_simplified |>
   mutate(log_streams   = log10(streams),
          log_followers = log10(artist_followers))
 
-# Artist followers vs streams (expected to be the strongest predictor)
+# Artist followers vs streams
 ggplot(model_data, aes(x = log_followers, y = log_streams)) +
   geom_point(alpha = 0.2) +
   geom_smooth(method = "lm", se = FALSE, color = "red") +
-  labs(title = "Artists with more followers get more streams",
+  labs(title = "Artists followers vs streams",
        x = "log10(Artist followers)", y = "log10(Streams)")
 
 # Tempo vs streams
@@ -205,7 +205,7 @@ ggplot(model_data, aes(x = title_length, y = log_streams)) +
 # Collaboration (feat) vs streams
 ggplot(model_data, aes(x = feat_flag, y = log_streams, fill = feat_flag)) +
   geom_boxplot(show.legend = FALSE) +
-  scale_x_discrete(labels = c("FALSE" = "Solo", "TRUE" = "Featuring")) +
+  scale_x_discrete(labels = c("FALSE" = "No feat. in title", "TRUE" = "Featuring")) +
   labs(title = "Do collaborations get more streams?",
        x = NULL, y = "log10(Streams)")
 
@@ -222,14 +222,13 @@ ggplot(model_data,
 # regression models
 # used model_data to predict streaming number, and adds variable as it moves on
 # model 1: predict streams using artist followers only
-m1 <- lm(log_streams ~ log_followers, data = model_data)
+m1 <- lm(log_streams ~ log_followers, model_data)
 # model 2: add temp
-m2 <- lm(log_streams ~ log_followers + tempo, data = model_data)
+m2 <- lm(log_streams ~ log_followers + tempo, model_data)
 # model 3: add title length and collaboration (feat)
-m3 <- lm(log_streams ~ log_followers + tempo + title_length + feat_flag, data = model_data)
+m3 <- lm(log_streams ~ log_followers + tempo + title_length + feat_flag, model_data)
 # model 4: add genre (final model)
-m4 <- lm(log_streams ~ log_followers + tempo + title_length + feat_flag + genres,
-         data = model_data)
+m4 <- lm(log_streams ~ log_followers + tempo + title_length + feat_flag + genres, model_data)
 
 # Contributed by Cherim Kim
 # shows if adding variables makes prediction better (adj_r_squared (higher=better), rmse(lower=better)
@@ -237,6 +236,7 @@ get_regression_summaries(m1)
 get_regression_summaries(m2)
 get_regression_summaries(m3)
 get_regression_summaries(m4)
+# m4 has highest adjusted adjusted r^2 and lowest rmse so we picked it for further investigation
 
 # effect of each variable in the final model
 get_regression_table(m4)
@@ -251,6 +251,19 @@ ggplot(m4_points, aes(x = log_streams_hat, y = residual)) +
   geom_hline(yintercept = 0, color = "red") +
   labs(title = "Residuals vs fitted (final model)",
        x = "Fitted log10(Streams)", y = "Residual")
+
+# Contributed by Rafael Wang
+# normal QQ plot creation
+m4_points <- m4_points |>
+  mutate (stdres=rstandard(m4))
+
+m4_points |>
+  ggplot(aes(sample=stdres))+
+  geom_qq(color="blue")+
+  geom_qq_line(color="red") +
+  ggtitle("Normal QQ plot of m4") +
+  labs(x="Theoretical quantile", y="stdres")
+  
 
 # Contributed by Cherim Kim
 # an easier way to see our results without reading regression numbers.
