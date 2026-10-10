@@ -166,5 +166,132 @@ success_genre_prediction <- tracks_simplified |>
   )
 success_genre_prediction
 
+# Contributed by Cherim Kim
+# added duration_min; adjusted unit from ms to minute
+tracks_simplified <- tracks_simplified |>
+  mutate(duration_min = duration_ms / 60000)
+
+# note: feat_flag uses str_detect(name, "feat), which could also match words like "defeat". This is likely only a few songs, so not adjustment will be necessary.
+
+# Contributed by Cherim Kim
+# Q2 Decoding Success
+# predictors: artist_followers, tempo, title_length, feat_flag, genres
+# used log(streams) and long(artist_followers) because both are extremely right skwed, and will disrupt regression
+# rows with 0 are removed (log of 0 is undefined), and rows with missing predictors are removed so every model uses the same rows.
+model_data <- tracks_simplified |>
+  filter(streams > 0, artist_followers > 0,
+         !is.na(tempo), !is.na(title_length), !is.na(feat_flag), !is.na(genres)) |>
+  mutate(log_streams   = log10(streams),
+         log_followers = log10(artist_followers))
+
+# Artist followers vs streams (expected to be the strongest predictor)
+ggplot(model_data, aes(x = log_followers, y = log_streams)) +
+  geom_point(alpha = 0.2) +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(title = "Artists with more followers get more streams",
+       x = "log10(Artist followers)", y = "log10(Streams)")
+
+# Tempo vs streams
+ggplot(model_data, aes(x = tempo, y = log_streams)) +
+  geom_point(alpha = 0.2) +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(title = "Tempo vs streams",
+       x = "Tempo (BPM)", y = "log10(Streams)")
+
+# Title length vs streams
+ggplot(model_data, aes(x = title_length, y = log_streams)) +
+  geom_point(alpha = 0.2) +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(title = "Title length vs streams",
+       x = "Number of characters in title", y = "log10(Streams)")
+
+# Collaboration (feat) vs streams
+ggplot(model_data, aes(x = feat_flag, y = log_streams, fill = feat_flag)) +
+  geom_boxplot(show.legend = FALSE) +
+  scale_x_discrete(labels = c("FALSE" = "Solo", "TRUE" = "Featuring")) +
+  labs(title = "Do collaborations get more streams?",
+       x = NULL, y = "log10(Streams)")
+
+# Genre vs streams (visualizes A's success_genre_prediction table)
+ggplot(model_data,
+       aes(x = fct_reorder(genres, log_streams, .fun = median),
+           y = log_streams)) +
+  geom_boxplot(fill = "steelblue", alpha = 0.6) +
+  coord_flip() +
+  labs(title = "Streams by genre (ordered by median)",
+       x = NULL, y = "log10(Streams)")
+
+# Contributed by Cherim Kim
+# regression models
+# used model_data to predict streaming number, and adds variable as it moves on
+# model 1: predict streams using artist followers only
+m1 <- lm(log_streams ~ log_followers, data = model_data)
+# model 2: add temp
+m2 <- lm(log_streams ~ log_followers + tempo, data = model_data)
+# model 3: add title length and collaboration (feat)
+m3 <- lm(log_streams ~ log_followers + tempo + title_length + feat_flag, data = model_data)
+# model 4: add genre (final model)
+m4 <- lm(log_streams ~ log_followers + tempo + title_length + feat_flag + genres,
+         data = model_data)
+
+# Contributed by Cherim Kim
+# shows if adding variables makes prediction better (adj_r_squared (higher=better), rmse(lower=better)
+get_regression_summaries(m1)
+get_regression_summaries(m2)
+get_regression_summaries(m3)
+get_regression_summaries(m4)
+
+# effect of each variable in the final model
+get_regression_table(m4)
+
+# Contributed by Cherim Kim
+# get each track's predicted value (log_streams_hat) and residual from the final model
+#  If the dots are spread evenly above and below the red line with no clear pattern, our model is a good fit.
+m4_points <- get_regression_points(m4)
+
+ggplot(m4_points, aes(x = log_streams_hat, y = residual)) +
+  geom_point(alpha = 0.2) +
+  geom_hline(yintercept = 0, color = "red") +
+  labs(title = "Residuals vs fitted (final model)",
+       x = "Fitted log10(Streams)", y = "Residual")
+
+# Contributed by Cherim Kim
+# Put songs into 4 groups, from artists with the fewest followers (1) to the most (4).
+# For each group, show the typical number of streams for solo songs and "feat" songs.
+# This helps us see if more followers and collaborations mean more streams
+model_data |>
+  mutate(follower_group = ntile(artist_followers, 4)) |>
+  group_by(follower_group, feat_flag) |>
+  summarize(median_streams = median(streams), count = n())
+
+# Contributed by Cherim Kim
+# Q3 Predicting industry trends
+# Combine A's two tables (all songs vs popular songs). Only keep years with at least 20 songs, since early years have too few songs for reliable averages.
+trends_long <- bind_rows(
+  trends_table         |> mutate(group = "All songs"),
+  trends_popular_table |> mutate(group = "Popular (popularity >= 62)")
+) |>
+  filter(count >= 20) |>
+  pivot_longer(c(average_duration, average_danceability, average_energy,
+                 average_acousticness, average_liveness, average_valence),
+               names_to = "feature", values_to = "value")
+
+# Contributed by Cherim Kim
+# Song characteristics over time, all songs vs popular songs
+ggplot(trends_long, aes(x = album_release_year, y = value, color = group)) +
+  geom_line() +
+  geom_smooth(method = "lm", se = FALSE, linetype = "dashed") +
+  facet_wrap(~ feature, scales = "free_y") +
+  labs(title = "Song characteristics over time",
+       x = "Album release year", y = "Average value", color = NULL) +
+  theme(legend.position = "bottom")
+
+# Contributed by Cherim Kim
+# Genre share by year (change 2000 if your group wants a different start year)
+ggplot(tracks_simplified |> filter(album_release_year >= 2000),
+       aes(x = album_release_year, fill = genres)) +
+  geom_bar(position = "fill") +
+  labs(title = "Genre share by release year",
+       x = "Album release year", y = "Share of tracks", fill = "Genre")
 
 
