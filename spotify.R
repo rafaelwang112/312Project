@@ -263,7 +263,7 @@ model_data |>
 
 # Contributed by Cherim Kim
 # Q3 Predicting industry trends
-# Combine A's two tables (all songs vs popular songs). Only keep years with at least 20 songs, since early years have too few songs for reliable averages.
+# Combine two tables (all songs vs popular songs). Only keep years with at least 20 songs, since early years have too few songs for reliable averages.
 trends_long <- bind_rows(
   trends_table         |> mutate(group = "All songs"),
   trends_popular_table |> mutate(group = "Popular (popularity >= 62)")
